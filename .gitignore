@@ -1,1 +1,4 @@
-ex[0-9]+$
+# Unignore all with extensions
+*
+!*.*
+db
