@@ -97,9 +97,8 @@ int main(int argc, char *argv[]) {
     test_sorting(numbers, count, reverse_order);
     test_sorting(numbers, count, strange_order);
     // test_sorting(numbers, count, NULL);
-    printf("sorted_order function dump:");
-    dump_or_destroy((unsigned char*)sorted_order, 25, 0);
-    // dump_or_destroy((unsigned char*)sorted_order, 1, 1);
+    dump_or_destroy(sorted_order, 25, 1);
     free(numbers);
+    dump_or_destroy(numbers, 25, 0);
     return 0;
 }
