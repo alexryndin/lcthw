@@ -11,59 +11,38 @@ static const char * const USAGE = "[-o] word [words...]";
 
 int process_file(char *path, int flags, size_t wordc, char **wordv) {
     FILE *f = NULL;
-    char *strp = NULL;
-    char print = 0;
     ssize_t read = 0;
-    size_t len = 0, line = 0;
+    size_t len = 0, line = 0, found_count = 0;
     char *read_line = NULL;
-    char *checker = NULL;
-    if (!flags) {
-        checker = calloc(wordc, sizeof(char));
-        CHECK_MEM(checker);
-    }
     f = fopen(path, "r");
     CHECK(f, "Error opening file %s", path);
 
     while( (read = getline(&read_line, &len, f)) != -1) {
-        print = 0;
+        found_count = 0;
         for (int i = 0; i < wordc; i++) {
-            if (print) {
+            if (flags && found_count > 0) {
                 break;
             }
-            strp = NULL;
-            LOG_DEBUG("comparing line %s with %s", read_line, wordv[i]);
-            strp = strstr(read_line, wordv[i]);
 
-            if (strp) {
-                if (flags) {
-                    print = 1;
-                } else {
-                    checker[i] = 1;
-                }
-            } else {
-                if (flags) {
-                    break;
-                }
+            LOG_DEBUG("comparing line %s with %s", read_line, wordv[i]);
+
+            if (strstr(read_line, wordv[i])) {
+                found_count += 1;
             }
         }
-        if (!flags) {
-            print = 1;
-            for (int i = 0; i < wordc; i++) {
-                print = checker[i] && print;
-                checker[i] = 0;
-            }
+        if ( (found_count && flags) || ((found_count == wordc) && !flags) ) {
+            LOG_DEBUG("found_count = %d, wordc = %d, flags = %d", found_count, wordc, flags);
+            printf("%s:%lu: %s", path, line, read_line);
         }
-        if (print) printf("%s:%lu: %s", path, line, read_line);
-        line += 1;
+
+        line  += 1;
     }
 
     if (read_line) free(read_line);
-    if (checker) free(checker);
     if (f) fclose(f);
     return 0;
 error:
     if (read_line) free(read_line);
-    if (checker) free(checker);
     if (f) fclose(f);
     return -1;
 }
