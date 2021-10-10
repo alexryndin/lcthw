@@ -3,18 +3,24 @@ LIBS=-ldl $(OPTLIBS)
 PREFIX?=/usr/local
 
 SOURCES=$(wildcard src/**/*.c src/*.c)
+HEADERS=$(wildcard src/**/*.h src/*.h)
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
 
 TEST_SRC=$(wildcard tests/*_tests.c)
 TESTS=$(patsubst %.c,%,$(TEST_SRC))
 
+BIN_SRC=$(wildcard bin/*.c)
+BIN=$(patsubst %.c,%,$(BIN_SRC))
+
 TARGET=build/lib.a
 SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
 
-all: $(TARGET) $(SO_TARGET) tests
+all: $(TARGET) $(SO_TARGET) tests $(BIN)
 
 dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)
 dev: all
+
+$(TESTS): $(TARGET) $(SO_TARGET)
 
 $(TARGET): CFLAGS += -fPIC
 $(TARGET): build $(OBJECTS)
