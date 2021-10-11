@@ -38,7 +38,7 @@ build:
 
 # The Unit Tests
 .PHONY: tests
-tests: CFLAGS += $(TARGET) -ldl
+tests: CFLAGS += -ldl
 tests: CFLAGS := $(filter-out -pedantic,$(CFLAGS))
 tests: $(TESTS)
 	sh ./tests/runtests.sh
