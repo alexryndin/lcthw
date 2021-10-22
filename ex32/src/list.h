@@ -27,18 +27,24 @@ void List_clear_destroy(List *list);
 
 void List_push(List *list, void *value);
 void *List_pop(List *list);
+void List_push_node(List *list, ListNode *node);
+ListNode* List_head(List *list);
 
 void List_unshift(List *list, void *value);
 void *List_shift(List *list);
 
 void *List_remove(List *list, ListNode *node);
 
-//#define LIST_FOREACH(List, First, Next, Val) \
-//    for(ListNode *Val = List->First; Val != NULL; Val = Val->Next) \
-//
+void List_swap(ListNode *a, ListNode *b);
+int List_len(List *list);
+
 #define LIST_FOREACH(List, First, Next, Val) \
-    ListNode *_node = NULL; \
-    ListNode *Val = NULL; \
-    for(Val = List->First; _node != NULL; Val = _node = _node->Next) \
+    for(ListNode *Val = List->First; Val != NULL; Val = Val->Next) \
+
+
+//#define LIST_FOREACH(List, First, Next, Val) \
+//    ListNode *_node = NULL; \
+//    ListNode *Val = NULL; \
+//    for(Val = List->First; _node != NULL; Val = _node = _node->Next)
 
 #endif
