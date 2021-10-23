@@ -21,7 +21,7 @@ void List_destroy(List *list);
 void List_clear(List *list);
 void List_clear_destroy(List *list);
 
-#define List_count(A) ((A)->count)
+#define List_len(A) ((A)->count)
 #define List_first(A) ((A)->first != NULL ? (A)->first->value : NULL)
 #define List_last(A) ((A)->last != NULL ? (A)->last->value : NULL)
 
@@ -36,15 +36,9 @@ void *List_shift(List *list);
 void *List_remove(List *list, ListNode *node);
 
 void List_swap(ListNode *a, ListNode *b);
-int List_len(List *list);
+// int List_len(List *list);
 
 #define LIST_FOREACH(List, First, Next, Val) \
     for(ListNode *Val = List->First; Val != NULL; Val = Val->Next) \
-
-
-//#define LIST_FOREACH(List, First, Next, Val) \
-//    ListNode *_node = NULL; \
-//    ListNode *Val = NULL; \
-//    for(Val = List->First; _node != NULL; Val = _node = _node->Next)
 
 #endif

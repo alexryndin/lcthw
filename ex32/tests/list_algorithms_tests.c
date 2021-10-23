@@ -136,6 +136,7 @@ char *test_numbers_merge_sort() {
 
 char *all_tests() {
     MU_SUITE_START();
+    LOG_DEBUG("JOPA");
     MU_RUN_TEST(test_bubble_sort);
     MU_RUN_TEST(test_merge_sort);
     MU_RUN_TEST(test_numbers_bubble_sort);

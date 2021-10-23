@@ -35,6 +35,7 @@ List *List_merge_sort(List *l, List_compare cmp) {
         return l;
     }
     List *left = List_create(), *right = NULL;
+    CHECK_MEM(left);
 
     List_push_node(left, List_head(l));
     int i = 1;
@@ -52,6 +53,7 @@ List *List_merge_sort(List *l, List_compare cmp) {
     right = List_merge_sort(right, cmp);
 
     ret = List_create();
+    CHECK_MEM(ret);
 
     while (List_len(left) > 0 && List_len(right) > 0) {
         if (cmp(List_first(left), List_first(right)) < 0)

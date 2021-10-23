@@ -38,6 +38,7 @@ build:
 .PHONY: tests
 tests: CFLAGS += $(TARGET)
 tests: CFLAGS := $(filter-out -pedantic,$(CFLAGS))
+tests: CFLAGS := $(filter-out -DNDEBUG,$(CFLAGS))
 tests: $(TESTS)
 	sh ./tests/runtests.sh
 

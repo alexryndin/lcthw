@@ -4,6 +4,7 @@
 List *List_create() { return calloc(1, sizeof(List)); }
 
 void List_destroy(List *list) {
+    CHECK(list != NULL, "Invalid list.");
     LIST_FOREACH(list, first, next, cur) {
         if (cur->prev) {
             free(cur->prev);
@@ -12,18 +13,20 @@ void List_destroy(List *list) {
 
     free(list->last);
     free(list);
+error:
+    return;
 }
 
 void List_clear(List *list) {
     LIST_FOREACH(list, first, next, cur) { free(cur->value); }
 }
 
-int List_len(List *list) {
-    CHECK(list != NULL, "Invalid list.");
-    return list->count;
-error:
-    return -1;
-}
+//int List_len(List *list) {
+//    CHECK(list != NULL, "Invalid list.");
+//    return list->count;
+//error:
+//    return -1;
+//}
 
 void List_clear_destroy(List *list) {
     LIST_FOREACH(list, first, next, cur) {
@@ -138,9 +141,12 @@ void *List_shift(List *list) {
 }
 
 inline void List_swap(ListNode *a, ListNode *b) {
+    CHECK(a != NULL && b != NULL, "Invalid node.");
     void *tmp = b->value;
     b->value = a->value;
     a->value = tmp;
+error:
+    return;
 }
 
 void *List_remove(List *list, ListNode *node) {
