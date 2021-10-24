@@ -6,7 +6,7 @@ static int *val1 = NULL;
 static int *val2 = NULL;
 
 char *test_create() {
-    array = FArray_create(sizeof(void *), 0, 100);
+    array = FArray_create(sizeof(void *), sizeof(int), 100);
     MU_ASSERT(array != NULL, "FArray_create failed.");
     MU_ASSERT(array->contents != NULL, "contents are wrong in array");
     MU_ASSERT(array->end == 0, "end isn't at the right spot");

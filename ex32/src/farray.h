@@ -74,9 +74,9 @@ error:
 }
 
 static inline void *FArray_new(FArray *array) {
-    CHECK(array->element_size > 0, "Can't use FArray_new on 0 size arrays.");
+    CHECK(array->storage_size > 0, "Can't use FArray_new on 0 size arrays.");
 
-    return calloc(1, array->element_size);
+    return calloc(1, array->storage_size);
 
 error:
     return NULL;

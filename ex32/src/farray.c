@@ -9,6 +9,7 @@ FArray *FArray_create(size_t element_size, size_t storage_size,
     ret->end = 0;
     ret->max = initial_max;
     ret->element_size = element_size;
+    ret->storage_size = storage_size;
     ret->expand_factor = DEFAULT_EXPAND_FACTOR;
 
     ret->contents =
