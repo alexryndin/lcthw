@@ -12,9 +12,7 @@ FArray *FArray_create(size_t element_size, size_t storage_size,
     ret->storage_size = storage_size;
     ret->expand_factor = DEFAULT_EXPAND_FACTOR;
 
-    ret->contents =
-        calloc(initial_max,
-               (size_t)sizeof(element_size)); // (size_t) to suppress warning
+    ret->contents = calloc(initial_max, element_size);
     CHECK_MEM(ret->contents);
 
     return ret;
@@ -98,6 +96,27 @@ int FArray_push_pointer(FArray *array, void *el) {
 
     FArray_inc(array);
     FArray_last(array) = el;
+    return 0;
+
+error:
+    return -1;
+}
+
+int FArray_push(FArray *array, void *el) {
+    void *rc = 0, *dst = NULL;
+    CHECK(array != NULL, "Invalid array.");
+
+    if (FArray_len(array) == FArray_max(array)) {
+        CHECK(FArray_expand(array) == 0, "Couldn't expand array");
+    }
+
+    dst = (void *)(array->contents + FArray_len(array) * array->element_size);
+    LOG_DEBUG("%d", *(int *)el);
+
+    rc = memcpy(dst, el, array->element_size);
+    CHECK(rc == dst, "memcpy failed.");
+    FArray_inc(array);
+    return 0;
 
 error:
     return -1;
@@ -117,8 +136,23 @@ error:
     return NULL;
 }
 
+void *FArray_pop(FArray *array) {
+    CHECK(array != NULL, "Invalid array.");
+    CHECK(FArray_len(array) > 0, "Empty array.");
+    void *ret = (void *)(array->contents +
+                         (FArray_len(array) - 1) * array->element_size);
+    ;
+    FArray_dec(array);
+
+    return ret;
+error:
+    return NULL;
+}
+
 void FArray_clear_destroy(FArray *array) {
     CHECK(array != NULL, "Invalid array.");
+    CHECK(array->element_size == sizeof(void *),
+          "Only ** arrays can be cleared.");
 
     for (int i = 0; i < array->end; i++) {
         free(((void **)(array->contents))[i]);

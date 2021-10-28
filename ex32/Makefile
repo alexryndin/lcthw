@@ -1,4 +1,4 @@
-CFLAGS=-g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG $(OPTFLAGS) -pedantic
+CFLAGS=-g -O2 -Wall -Wextra -Isrc -DNDEBUG $(OPTFLAGS) -pedantic
 LIBS=-ldl $(OPTLIBS)
 PREFIX?=/usr/local
 
@@ -12,10 +12,13 @@ TESTS=$(patsubst %.c,%,$(TEST_SRC))
 BIN_SRC=$(wildcard bin/*.c)
 BIN=$(patsubst %.c,%,$(BIN_SRC))
 
+EXTERNAL_SRC=$(wildcard external/**/bstrlib.c)
+EXTERNAL=$(patsubst %.c,%.o,$(EXTERNAL_SRC))
+
 TARGET=build/lib.a
 SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
 
-all: $(TARGET) $(SO_TARGET) tests $(BIN)
+all: $(TARGET) $(SO_TARGET) tests $(BIN) $(EXTERNAL)
 
 dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)
 dev: all
@@ -23,12 +26,13 @@ dev: all
 $(TESTS): $(TARGET) $(SO_TARGET)
 
 $(TARGET): CFLAGS += -fPIC
-$(TARGET): build $(OBJECTS)
-	ar rcs $@ $(OBJECTS)
+$(TARGET): build $(OBJECTS) $(EXTERNAL)
+	ar rcs $@ $(OBJECTS) $(EXTERNAL)
 	ranlib $@
 
+tests: CFLAGS += $(TARGET)
 $(SO_TARGET): $(TARGET) $(OBJECTS)
-	$(CC) $(LDFLAGS) -shared -o $@ $(OBJECTS)
+	$(CC) $(LDFLAGS) -shared -o $@ $(OBJECTS) $(EXTERNAL)
 
 build:
 	@mkdir -p build

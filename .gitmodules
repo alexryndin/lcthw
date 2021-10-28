@@ -1,0 +1,6 @@
+[submodule "ex32/src/bstrlib"]
+	path = ex32/src/bstrlib
+	url = git@github.com:websnarf/bstrlib.git
+[submodule "ex32/external/bstrlib"]
+	path = ex32/external/bstrlib
+	url = git@github.com:websnarf/bstrlib.git

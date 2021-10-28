@@ -16,7 +16,7 @@ FArray *create_words() {
 }
 
 int is_sorted(FArray *array) {
-    int i = 0;
+    size_t i = 0;
     for (i = 0; i < FArray_len(array) - 1; i++) {
         if (strcmp(FArray_get_pointer(array, i),
                    FArray_get_pointer(array, i + 1)) > 0) {

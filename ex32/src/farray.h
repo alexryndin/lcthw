@@ -25,7 +25,11 @@ int FArray_contract(FArray *array);
 
 int FArray_push_pointer(FArray *array, void *el);
 
+int FArray_push(FArray *array, void *el);
+
 void *FArray_pop_pointer(FArray *array);
+
+void *FArray_pop(FArray *array);
 
 void FArray_clear_destroy(FArray *array);
 
@@ -42,8 +46,10 @@ void FArray_clear_destroy(FArray *array);
 
 static inline void FArray_set_pointer(FArray *array, size_t i, void *el) {
     CHECK(i < array->max, "array attempt to set past max.");
-    CHECK(array->element_size == sizeof(void *),
-          "A pointer can only be set in ** arrays, whereas element size is %lu.", array->element_size);
+    CHECK(
+        array->element_size == sizeof(void *),
+        "A pointer can only be set in ** arrays, whereas element size is %lu.",
+        array->element_size);
     if (i >= array->end)
         array->end = i + 1;
     ((void **)(array->contents))[i] = el;
@@ -60,11 +66,31 @@ error:
     return NULL;
 }
 
+static inline void FArray_set(FArray *array, size_t i, void *el) {
+    void *rc = NULL, *dst = NULL;
+    CHECK(i < array->max, "array attempt to set past max.");
+    dst = (void *)(array->contents + i * array->element_size);
+    rc = memcpy(dst, el, array->element_size);
+    CHECK(rc == dst, "memcpy failed.");
+    if (i >= array->end)
+        array->end = i + 1;
+error:
+    return;
+}
+
+static inline void *FArray_get(FArray *array, size_t i) {
+    CHECK(i < array->max, "array attempt to get past max");
+    return (void *)(array->contents + i * array->element_size);
+error:
+    return NULL;
+}
+
 static inline void *FArray_remove_pointer(FArray *array, size_t i) {
+    void *el;
     CHECK(i < array->max, "array attempt to get past max");
     CHECK(array->element_size == sizeof(void *),
           "Pointer can only be removed from ** arrays");
-    void *el = ((void **)(array->contents))[i];
+    el = ((void **)(array->contents))[i];
 
     ((void **)(array->contents))[i] = NULL;
 
@@ -82,6 +108,11 @@ error:
     return NULL;
 }
 
-#define FArray_free(E) free((E))
+#define FArray_free(E)                                                         \
+    do {                                                                       \
+        CHECK(array->element_size == sizeof(void *),                           \
+              "can only free from ** array");                                  \
+        free((E));                                                             \
+    } while (0)
 
 #endif
