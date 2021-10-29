@@ -25,6 +25,9 @@ dev: all
 
 $(TESTS): $(TARGET) $(SO_TARGET)
 
+$(BIN): $(TARGET)
+
+
 $(TARGET): CFLAGS += -fPIC
 $(TARGET): build $(OBJECTS) $(EXTERNAL)
 	ar rcs $@ $(OBJECTS) $(EXTERNAL)

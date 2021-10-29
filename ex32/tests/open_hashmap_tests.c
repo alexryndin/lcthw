@@ -96,6 +96,7 @@ char *test_uint32() {
     OpenHashmap *map = NULL;
     map = OpenHashmap_create((Hashmap_compare)uint32_cmp,
                              (Hashmap_hash)uint32_hash);
+    MU_ASSERT(map != NULL, "Map creationg failed.");
     for (i = 0; i < 10000; i++) {
         key = malloc(sizeof(uint32_t));
         value = malloc(sizeof(uint32_t));
@@ -114,7 +115,7 @@ char *test_uint32() {
 
     LOG_DEBUG("number of buckets %zu", map->number_of_buckets);
     LOG_DEBUG("number of elements %zu", map->number_of_elements);
-        MU_ASSERT(OpenHashmap_destroy_with_kv(map) == 0, "Failed to destroy map.");
+    MU_ASSERT(OpenHashmap_destroy_with_kv(map) == 0, "Failed to destroy map.");
 error:
     return NULL;
 }

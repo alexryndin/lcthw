@@ -44,7 +44,6 @@ OpenHashmap *OpenHashmap_create(OpenHashmap_compare compare,
     return _OpenHashmap_create(compare, hash, DEFAULT_NUMBER_OF_BUCKETS);
 }
 
-
 int OpenHashmap_destroy_with_kv(OpenHashmap *map) {
     int rc = 0;
     OpenHashmapNode *node = NULL;
