@@ -1,6 +1,7 @@
-CFLAGS=-g -O2 -Wall -Wextra -Isrc -DNDEBUG $(OPTFLAGS) -pedantic
+CFLAGS=-g -O2 -Wall -Wextra -Isrc -Iexternal -DNDEBUG $(OPTFLAGS) -pedantic
 LIBS=-ldl $(OPTLIBS)
 PREFIX?=/usr/local
+CPATH=src external bin tests
 
 SOURCES=$(wildcard src/**/*.c src/*.c)
 HEADERS=$(wildcard src/**/*.h src/*.h)
@@ -20,7 +21,7 @@ SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
 
 all: $(TARGET) $(SO_TARGET) tests $(BIN) $(EXTERNAL)
 
-dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)
+dev: CFLAGS=-g -Wall -Isrc -Iexternal -Wall -Wextra $(OPTFLAGS)
 dev: all
 
 $(TESTS): $(TARGET) $(SO_TARGET)

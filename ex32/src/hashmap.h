@@ -5,14 +5,17 @@
 #include "hashmap_utils.h"
 #include <stdint.h>
 
-#define DEFAULT_NUMBER_OF_BUCKETS 100
+#define DEFAULT_NUMBER_OF_BUCKETS      100
+#define HASHMAP_DEFAULT_REALLOC_FACTOR 5
 
-
-typedef struct OpenHashmap {
+typedef struct Hashmap {
     FArray *buckets;
     Hashmap_compare compare;
     Hashmap_hash hash;
     size_t number_of_buckets;
+    size_t number_of_elements;
+    size_t realloc_factor;
+    double expand_factor;
 } Hashmap;
 
 typedef struct HashmapNode {
@@ -25,6 +28,7 @@ typedef int (*Hashmap_traverse_cb)(HashmapNode *node);
 
 Hashmap *Hashmap_create(Hashmap_compare compare, Hashmap_hash hash);
 void Hashmap_destroy(Hashmap *map);
+int Hashmap_destroy_with_kv(Hashmap *map);
 
 int Hashmap_set(Hashmap *map, void *key, void *data);
 void *Hashmap_get(Hashmap *map, void *key);

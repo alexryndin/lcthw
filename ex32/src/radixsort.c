@@ -5,7 +5,7 @@
 #define ByteOf(a, b) (((uint8_t *)&a)[(b)])
 
 void radix_sort(uint32_t *src, uint32_t *dst, size_t n, uint8_t offset) {
-    int i = 0;
+    size_t i = 0;
     uint8_t count[257] = {0};
 
     for (i = 0; i < n; i++) {

@@ -1,5 +1,5 @@
-#include "../external/bstrlib/bstrlib.h"
-#include "../src/hashmap.h"
+#include <bstrlib/bstrlib.h>
+#include <hashmap.h>
 #include "minunit.h"
 #include <assert.h>
 
@@ -31,23 +31,15 @@ static int traverse_fail_cb(HashmapNode *node) {
     return -1;
 }
 
-char *test_create() {
+char *test_simple() {
+    int rc = 0;
     map = Hashmap_create(NULL, NULL);
     MU_ASSERT(map != NULL, "Failed to create map.");
     MU_ASSERT(map != NULL, "Failed to create map.");
     MU_ASSERT(map->hash != NULL, "Failed to create map.");
     MU_ASSERT(map->compare != NULL, "Failed to create map.");
-    return NULL;
-}
 
-char *test_destroy() {
-    Hashmap_destroy(map);
-
-    return NULL;
-}
-
-char *test_get_set() {
-    int rc = Hashmap_set(map, &test1, &expect1);
+    rc = Hashmap_set(map, &test1, &expect1);
     MU_ASSERT(rc == 0, "Failed to set &test1");
     bstring result = Hashmap_get(map, &test1);
     MU_ASSERT(result == &expect1, "Wrong value for test1.");
@@ -62,11 +54,8 @@ char *test_get_set() {
     result = Hashmap_get(map, &test3);
     MU_ASSERT(result == &expect3, "Wrong value for test3.");
 
-    return NULL;
-}
 
-char *test_traverse() {
-    int rc = Hashmap_traverse(map, traverse_good_cb);
+    rc = Hashmap_traverse(map, traverse_good_cb);
     MU_ASSERT(rc == 0, "Failed to traverse.");
     MU_ASSERT(traverse_called == 3, "Wrong count traverse.");
 
@@ -75,15 +64,12 @@ char *test_traverse() {
     MU_ASSERT(rc == -1, "Failed to traverse.");
     MU_ASSERT(traverse_called == 2, "Wrong count traverse for fail.");
 
-    return NULL;
-}
 
-char *test_delete() {
     bstring deleted = (bstring)Hashmap_delete(map, &test1);
     MU_ASSERT(deleted != NULL, "Got NULL on delete.");
     MU_ASSERT(deleted == &expect1, "Should get test1.");
 
-    bstring result = Hashmap_get(map, &test1);
+    result = Hashmap_get(map, &test1);
     MU_ASSERT(result == NULL, "Should delete.");
 
     deleted = (bstring)Hashmap_delete(map, &test2);
@@ -100,17 +86,48 @@ char *test_delete() {
     result = Hashmap_get(map, &test3);
     MU_ASSERT(result == NULL, "Should delete.");
 
+    Hashmap_destroy(map);
     return NULL;
 }
+
+char *test_uint32() {
+    uint32_t i = 0;
+    int rc = 0;
+    uint32_t *key = NULL, *value = NULL;
+    Hashmap *map = NULL;
+    map = Hashmap_create((Hashmap_compare)uint32_cmp,
+                             (Hashmap_hash)uint32_hash);
+    MU_ASSERT(map != NULL, "Map creationg failed.");
+    for (i = 0; i < 10000; i++) {
+        LOG_DEBUG("inserting %d", i);
+        key = malloc(sizeof(uint32_t));
+        value = malloc(sizeof(uint32_t));
+        CHECK_MEM(key);
+        CHECK_MEM(value);
+        *value = i * 333;
+        *key = i;
+        rc = Hashmap_set(map, key, value);
+        MU_ASSERT(rc == 0, "Failed to insert into map");
+    }
+
+    for (i = 0; i < 10000; i++) {
+        value = Hashmap_get(map, &i);
+        MU_ASSERT(*value == i * 333, "Failed to get from map");
+    }
+
+    LOG_DEBUG("number of buckets %zu", map->number_of_buckets);
+    LOG_DEBUG("number of elements %zu", map->number_of_elements);
+    MU_ASSERT(Hashmap_destroy_with_kv(map) == 0, "Failed to destroy map.");
+error:
+    return NULL;
+}
+
 
 char *all_tests() {
     MU_SUITE_START();
 
-    MU_RUN_TEST(test_create);
-    MU_RUN_TEST(test_get_set);
-    MU_RUN_TEST(test_traverse);
-    MU_RUN_TEST(test_delete);
-    MU_RUN_TEST(test_destroy);
+    MU_RUN_TEST(test_simple);
+    MU_RUN_TEST(test_uint32);
 
     return NULL;
 }
