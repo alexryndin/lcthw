@@ -240,6 +240,51 @@ char *test_push_pop_complex_structs() {
     return NULL;
 }
 
+char *test_pointers() {
+    FArray *array = NULL;
+    array = FArray_create(sizeof(void *), 0, 1);
+    int test1 = 6;
+    int test2 = 42;
+    int test3 = 100000000;
+
+    int *test1_ptr = &test1;
+    int *test2_ptr = &test2;
+    int *test3_ptr = &test3;
+
+    LOG_DEBUG("test1 address %p", &test1);
+    LOG_DEBUG("farray_get 0 is %p", *(void **)FArray_get(array, 0));
+
+    FArray_push_pointer(array, &test1);
+    FArray_push(array, &test1_ptr);
+    FArray_push_pointer(array, test2_ptr);
+    FArray_push(array, &test2_ptr);
+    FArray_push_pointer(array, &test3);
+    FArray_push(array, &test3_ptr);
+
+
+    MU_ASSERT(*(void **)FArray_get(array, 0) == &test1, "Wrong address in array");
+    MU_ASSERT(*(void **)FArray_get(array, 1) == &test1, "Wrong address in array");
+    MU_ASSERT((void *)FArray_get_pointer(array, 0) == &test1, "Wrong address in array");
+    MU_ASSERT((void *)FArray_get_pointer(array, 1) == &test1, "Wrong address in array");
+    MU_ASSERT(*(void **)FArray_get(array, 2) == &test2, "Wrong address in array");
+    MU_ASSERT(*(void **)FArray_get(array, 3) == &test2, "Wrong address in array");
+    MU_ASSERT((void *)FArray_get_pointer(array, 2) == &test2, "Wrong address in array");
+    MU_ASSERT((void *)FArray_get_pointer(array, 3) == &test2, "Wrong address in array");
+    MU_ASSERT(*(void **)FArray_get(array, 4) == &test3, "Wrong address in array");
+    MU_ASSERT(*(void **)FArray_get(array, 5) == &test3, "Wrong address in array");
+    MU_ASSERT((void *)FArray_get_pointer(array, 4) == &test3, "Wrong address in array");
+    MU_ASSERT((void *)FArray_get_pointer(array, 5) == &test3, "Wrong address in array");
+
+    MU_ASSERT(**(int **)FArray_get(array, 4) == test3, "Wrong value in array");
+    MU_ASSERT(**(int **)FArray_get(array, 5) == test3, "Wrong value in array");
+    MU_ASSERT(**(int **)FArray_get(array, 2) == test2, "Wrong value in array");
+    MU_ASSERT(**(int **)FArray_get(array, 3) == test2, "Wrong value in array");
+    MU_ASSERT(**(int **)FArray_get(array, 0) == test1, "Wrong value in array");
+    MU_ASSERT(**(int **)FArray_get(array, 1) == test1, "Wrong value in array");
+
+    return NULL;
+}
+
 char *all_tests() {
     MU_SUITE_START();
     MU_RUN_TEST(test_simple_pointers);
@@ -247,6 +292,7 @@ char *all_tests() {
     MU_RUN_TEST(test_ints_set);
     MU_RUN_TEST(test_set_complex_structs);
     MU_RUN_TEST(test_push_pop_complex_structs);
+    MU_RUN_TEST(test_pointers);
 
     return NULL;
 }
