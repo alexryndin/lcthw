@@ -8,12 +8,9 @@
 
 BSTree *BSTree_create(BSTree_compare compare) {
     BSTree *t = calloc(1, sizeof(BSTree));
-    BSTreeNode *r = calloc(1, sizeof(BSTreeNode));
 
     CHECK_MEM(t);
-    CHECK_MEM(r);
 
-    t->root = r;
     t->compare = compare != NULL ? compare : (BSTree_compare)str_cmp;
 
     return t;
@@ -21,8 +18,6 @@ BSTree *BSTree_create(BSTree_compare compare) {
 error:
     if (t != NULL)
         free(t);
-    if (r != NULL)
-        free(r);
     return NULL;
 }
 
@@ -48,31 +43,27 @@ error:
     return;
 }
 
-BSTreeNode *BSTree_get_node(BSTreeNode *n, void *key, char create,
-                            BSTree_compare cmp) {
-    LOG_DEBUG("key is %s", bdata((bstring)key));
+BSTreeNode *BSTree_get_node(BSTree *t, void *key, char create) {
     BSTreeNode *ret = NULL;
-    CHECK(n != NULL, "Null node.");
-    if (n->key == NULL) {
-        // possibly root node in empty tree
-        CHECK(n->left == NULL && n->right == NULL, "Null key.");
-        n->key = key;
-        return n;
+    BSTreeNode *n = NULL;
+    CHECK(t != NULL, "Null node.");
+    if (t->root == NULL) {
+        if (create) {
+            ret = calloc(1, sizeof(BSTreeNode));
+            CHECK_MEM(ret);
+            t->root = ret;
+            ret->key = key;
+            return ret;
+        } else {
+            return NULL;
+        }
     }
 
-    ret = n;
-    int compare_res = cmp(ret->key, key);
-    LOG_DEBUG("comparing %s and %s, result is %d", bdata((bstring)key),
-              bdata((bstring)ret->key), compare_res);
+    ret = t->root;
 
     while (1) {
-        LOG_DEBUG("comparing %s and %s", bdata((bstring)key),
-                  bdata((bstring)ret->key));
-        compare_res = cmp(ret->key, key);
-        switch (compare_res) {
+        switch (t->compare(ret->key, key)) {
         case 0:
-            LOG_DEBUG("I'm here");
-            LOG_DEBUG("data is %s", bdata((bstring)ret->data));
             return ret;
         case -1:
             if (ret->left != NULL) {
@@ -120,7 +111,7 @@ error:
 int BSTree_set(BSTree *t, void *key, void *data) {
     CHECK(key != NULL, "Null key.");
     CHECK(t != NULL, "Null tree.");
-    BSTreeNode *n = BSTree_get_node(t->root, key, 1, t->compare);
+    BSTreeNode *n = BSTree_get_node(t, key, 1);
     CHECK(n != NULL, "Could't get/create node.");
     n->data = data;
     return 0;
@@ -132,7 +123,7 @@ error:
 void *BSTree_get(BSTree *t, void *key) {
     CHECK(key != NULL, "Null key.");
     CHECK(t != NULL, "Null tree.");
-    BSTreeNode *ret = BSTree_get_node(t->root, key, 0, t->compare);
+    BSTreeNode *ret = BSTree_get_node(t, key, 0);
     if (ret == NULL) {
         return NULL;
     } else {
@@ -185,20 +176,24 @@ error:
     return -1;
 }
 
-int change_parent(BSTreeNode *cur, BSTreeNode *change) {
+int change_parent(BSTree *t, BSTreeNode *cur, BSTreeNode *change) {
     CHECK(cur != NULL, "Null current node.");
-    CHECK(cur->parent != NULL, "Null parent node.");
 
     if (change != NULL)
         change->parent = cur->parent;
-    if (cur == cur->parent->left) {
-        cur->parent->left = change;
-        return 0;
-    } else if (cur == cur->parent->right) {
-        cur->parent->right = change;
+    if (cur->parent != NULL) {
+        if (cur == cur->parent->left) {
+            cur->parent->left = change;
+            return 0;
+        } else if (cur == cur->parent->right) {
+            cur->parent->right = change;
+            return 0;
+        }
+        SENTINEL("Dangling node.");
+    } else {
+        t->root = change;
         return 0;
     }
-    SENTINEL("Dangling node.");
 error:
     return -1;
 }
@@ -206,7 +201,7 @@ error:
 void *BSTree_delete(BSTree *t, void *key, char free_key) {
     CHECK(t != NULL, "Null tree.");
     CHECK(t->root != NULL, "Null root.");
-    BSTreeNode *d = BSTree_get_node(t->root, key, 0, t->compare);
+    BSTreeNode *d = BSTree_get_node(t, key, 0);
     BSTreeNode *ret = NULL;
     BSTreeNode *change = NULL;
     if (d == NULL)
@@ -219,16 +214,14 @@ void *BSTree_delete(BSTree *t, void *key, char free_key) {
         }
         d->key = NULL;
         d->data = NULL;
-        if (d->parent != NULL) {
-            CHECK(change_parent(d, NULL) == 0, "Could't change parent link.");
-            free(d);
-        }
+        CHECK(change_parent(t, d, NULL) == 0, "Could't change parent link.");
+        free(d);
         return ret;
     }
 
     if (d->right != NULL && d->left == NULL) {
         if (d->parent != NULL) {
-            CHECK(change_parent(d, d->right) == 0,
+            CHECK(change_parent(t, d, d->right) == 0,
                   "Could't change parent link.");
         } else {
             t->root = d->right;
@@ -243,13 +236,7 @@ void *BSTree_delete(BSTree *t, void *key, char free_key) {
     }
 
     if (d->left != NULL && d->right == NULL) {
-        if (d->parent != NULL) {
-            CHECK(change_parent(d, d->left) == 0,
-                  "Could't change parent link.");
-        } else {
-            t->root = d->left;
-            d->left->parent = NULL;
-        }
+        CHECK(change_parent(t, d, d->left) == 0, "Could't change parent link.");
         if (free_key) {
             free(d->key);
             d->key = NULL;
@@ -266,7 +253,7 @@ void *BSTree_delete(BSTree *t, void *key, char free_key) {
         d->key = d->right->key;
         d->data = d->right->data;
         d = d->right;
-        CHECK(change_parent(d, d->right) == 0, "Could't change parent link.");
+        CHECK(change_parent(t, d, d->right) == 0, "Could't change parent link.");
         free(d);
         return ret;
     }
@@ -279,7 +266,7 @@ void *BSTree_delete(BSTree *t, void *key, char free_key) {
     d->key = change->key;
     d->data = change->data;
 
-    CHECK(change_parent(change, change->right) == 0,
+    CHECK(change_parent(t, change, change->right) == 0,
           "Could't change parent link.");
     free(change);
     return ret;
