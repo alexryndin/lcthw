@@ -6,7 +6,16 @@
 typedef int (*Hashmap_compare)(void *a, void *b);
 typedef uint32_t (*Hashmap_hash)(void *key);
 
-int str_cmp(bstring b1, bstring b2) { return bstrcmp(b1, b2); }
+int str_cmp(bstring b1, bstring b2) {
+    int res = bstrcmp(b1, b2);
+    if (res == SHRT_MIN)
+        return -2;
+    if (res < 0)
+        return -1;
+    if (res > 0)
+        return 1;
+    return 0;
+}
 
 int uint32_cmp(uint32_t *a, uint32_t *b) {
     if (*a < *b)
