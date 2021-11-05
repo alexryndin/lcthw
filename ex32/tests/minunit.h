@@ -3,16 +3,25 @@
 #define _minunit_h
 
 #include "../src/dbg.h"
+#include <bstrlib/bstrlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define MU_SUITE_START() char *message = NULL
 
-#define MU_ASSERT(test, message) \
-    if (!(test))                 \
-        do {                     \
-            LOG_ERR(message);    \
-            return message;      \
+#define MU_ASSERTF(test, message, ...)                     \
+    if (!(test))                                           \
+        do {                                               \
+            bstring err = bformat(message, ##__VA_ARGS__); \
+            LOG_ERR(bdata(err));                           \
+            return bdata(err);                             \
+    } while (0)
+
+#define MU_ASSERT(test, message, ...)        \
+    if (!(test))                             \
+        do {                                 \
+            LOG_ERR(message, ##__VA_ARGS__); \
+            return message;                  \
     } while (0)
 
 #define MU_RUN_TEST(test)                  \
@@ -24,20 +33,19 @@
             return message;                \
     } while (0);
 
-#define RUN_TESTS(name)                          \
-    int main(int argc, char *argv[]) {           \
-        (void)argc;                              \
-        (void)argv;                              \
-        LOG_DEBUG("----- RUNNING: %s", argv[0]); \
-        printf("----\nRUNNING: %s\n", argv[0]);  \
-        char *result = name();                   \
-        if (result != 0) {                       \
-            printf("FAILED: %s\n", result);      \
-        } else {                                 \
-            printf("ALL TESTS PASSED\n");        \
-        }                                        \
-        printf("Tests run: %d\n", tests_run);    \
-        exit(result != 0);                       \
+#define RUN_TESTS(name)                         \
+    int main(int argc, char *argv[]) {          \
+        (void)argc;                             \
+        (void)argv;                             \
+        printf("----\nRUNNING: %s\n", argv[0]); \
+        char *result = name();                  \
+        if (result != 0) {                      \
+            printf("FAILED: %s\n", result);     \
+        } else {                                \
+            printf("ALL TESTS PASSED\n");       \
+        }                                       \
+        printf("Tests run: %d\n", tests_run);   \
+        exit(result != 0);                      \
     }
 
 int tests_run;
