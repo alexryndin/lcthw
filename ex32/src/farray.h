@@ -33,8 +33,8 @@ void *FArray_pop(FArray *array);
 
 void FArray_clear_destroy(FArray *array);
 
-#define FArray_last(A) ((void **)(array->contents))[(A)->end - 1]
-#define FArray_index(i) (array->contents + (i)*array->element_size)
+#define FArray_last(A) ((void **)((A)->contents))[(A)->end - 1]
+#define FArray_index(i) ((A)->contents + (i)*array->element_size)
 #define FArray_first(A) ((A)->contents[0])
 #define FArray_len(A) ((A)->end)
 #define FArray_count(A) FArray_end(A)
