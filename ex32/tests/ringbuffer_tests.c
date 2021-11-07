@@ -26,7 +26,7 @@ char *test_simple() {
 
     RingBuffer_gets(rb, res);
     LOG_DEBUG("%s", bdata(res));
-    MU_ASSERT(blength(res) == 8, "Got %lu", RingBuffer_available_space(rb));
+    MU_ASSERT(blength(res) == 8, "Got %d", blength(res));
     MU_ASSERT(strcmp(bdata(res), "testtest") == 0, "Got %s", bdata(res));
 
     MU_ASSERT(RingBuffer_available_space(rb) == 5, "Got %lu", RingBuffer_available_space(rb));
