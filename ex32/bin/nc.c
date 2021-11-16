@@ -97,12 +97,14 @@ error:
 int main(int argc, char *argv[]) {
     int rc = 0;
     ssize_t ret = 0;
+    char exit = 0;
 
     RingBuffer *in_buf = NULL;
     RingBuffer *out_buf = NULL;
 
     fd_set fd_read;
     fd_set fd_read_mod;
+    char buf[10];
     struct timeval timeout = {0};
 
     int socket = 0;
@@ -122,7 +124,7 @@ int main(int argc, char *argv[]) {
     CHECK(in_buf != NULL, "Failed to create in_buf");
     CHECK(out_buf != NULL, "Failed to create out_buf");
 
-    while (1) {
+    while (!exit) {
         fd_read_mod = fd_read;
         timeout.tv_sec = 50;
         ret = select(socket + 1, &fd_read_mod, NULL, NULL, &timeout);
@@ -133,27 +135,41 @@ int main(int argc, char *argv[]) {
         }
         if (FD_ISSET(0, &fd_read_mod)) {
             rc = read_some(out_buf, 0, 0);
+            LOG_DEBUG("read from 0, rc %d", rc);
             CHECK(rc >= 0, "Failed to read from stdin.");
         }
         if (FD_ISSET(socket, &fd_read_mod)) {
             rc = read_some(in_buf, socket, 1);
+            LOG_DEBUG("read from socket, rc %d, buf count %zu buf len %zu", rc,
+                      in_buf->count, in_buf->length);
             CHECK(rc >= 0, "Failed to read from socket.");
+            if (rc == 0) {
+                exit = 1;
+            }
         }
 
         while (!RingBuffer_empty(in_buf)) {
             rc = write_some(in_buf, 1, 0);
             CHECK(rc >= 0, "Failed to write to stdout.");
+            LOG_DEBUG("write to stdout rc %d", rc);
         }
 
         while (!RingBuffer_empty(out_buf)) {
             rc = write_some(out_buf, socket, 1);
             CHECK(rc >= 0, "Failed to write to socket.");
+            LOG_DEBUG("write to socket, rc %d", rc);
         }
     }
 
 exit:
-    if (in_buf != NULL ) RingBuffer_destroy(in_buf);
-    if (out_buf != NULL ) RingBuffer_destroy(out_buf);
+    if (in_buf != NULL)
+        RingBuffer_destroy(in_buf);
+    if (out_buf != NULL)
+        RingBuffer_destroy(out_buf);
+    if (socket > 0) {
+        shutdown(socket, SHUT_RDWR);
+        close(socket);
+    }
     return rc;
 error:
     rc = -1;
