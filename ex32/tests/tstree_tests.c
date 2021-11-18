@@ -23,7 +23,6 @@ void TSTree_traverse_test_cb(void *value, void *data) {
     traverse_count++;
 }
 
-
 char *test_simple() {
     TSTree *tree = NULL;
     tree = TSTree_create();
@@ -43,8 +42,7 @@ char *test_simple() {
 
     // tst returns the last one inserted
     void *res = TSTree_search(tree, bdata(&test1), blength(&test1));
-    MU_ASSERT(res == valueA,
-            "Got the wrong value back, should get A not B.");
+    MU_ASSERT(res == valueA, "Got the wrong value back, should get A not B.");
 
     // tst does not find if not exact
     res = TSTree_search(tree, "TESTNO", strlen("TESTNO"));
@@ -74,12 +72,80 @@ char *test_simple() {
     return NULL;
 }
 
-char *all_tests() {
-    MU_SUITE_START();
+char *test_random_manual() {
+    traverse_count = 0;
 
-    MU_RUN_TEST(test_simple);
+    struct tagbstring key1 = bsStatic("a");
+    char *value1 = "val1";
+    struct tagbstring key2 = bsStatic("aaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    char *value2 = "val2";
+    struct tagbstring key3 = bsStatic("b");
+    char *value3 = "val3";
+    struct tagbstring key4 = bsStatic("bbbbbbbbbbbbbbbbbbbbbb");
+    char *value4 = "val4";
+    struct tagbstring key5 = bsStatic("sdfsj;sdkhjg;wehpotyqwpeghas;hd");
+    char *value5 = "val5";
+    struct tagbstring key6 = bsStatic("ab;sdjh;dgshdg;hsa;hg;asdgh;");
+    char *value6 = "val6";
+
+    TSTree *tree = NULL;
+    tree = TSTree_create();
+    MU_ASSERT(tree != NULL, "");
+    TSTreeNode *node = NULL;
+
+    node = TSTree_insert(tree, bdata(&key1), blength(&key1), value1);
+    MU_ASSERT(node != NULL, "");
+    node = TSTree_insert(tree, bdata(&key2), blength(&key2), value2);
+    MU_ASSERT(node != NULL, "");
+    node = TSTree_insert(tree, bdata(&key3), blength(&key3), value3);
+    MU_ASSERT(node != NULL, "");
+    node = TSTree_insert(tree, bdata(&key4), blength(&key4), value4);
+    MU_ASSERT(node != NULL, "");
+    node = TSTree_insert(tree, bdata(&key5), blength(&key5), value5);
+    MU_ASSERT(node != NULL, "");
+    node = TSTree_insert(tree, bdata(&key6), blength(&key6), value6);
+    MU_ASSERT(node != NULL, "");
+
+    void *res = TSTree_search(tree, bdata(&key1), blength(&key1));
+    MU_ASSERT(res == value1, "");
+    res = TSTree_search(tree, bdata(&key2), blength(&key2));
+    MU_ASSERT(res == value2, "");
+    res = TSTree_search(tree, bdata(&key3), blength(&key3));
+    MU_ASSERT(res == value3, "");
+    res = TSTree_search(tree, bdata(&key4), blength(&key4));
+    MU_ASSERT(res == value4, "");
+    res = TSTree_search(tree, bdata(&key5), blength(&key5));
+    MU_ASSERT(res == value5, "");
+    res = TSTree_search(tree, bdata(&key6), blength(&key6));
+    MU_ASSERT(res == value6, "");
+
+    res = TSTree_search_prefix(tree, "a", strlen("a"));
+    MU_ASSERT(res == value1, "Should find for partial prefix.");
+
+    res = TSTree_search_prefix(tree, "abc", strlen("abc"));
+    MU_ASSERT(res == value6, "Should find for partial prefix.");
+
+    res = TSTree_search_prefix(tree, "ab;", strlen("abc"));
+    MU_ASSERT(res == value6, "Should find for partial prefix.");
+
+    traverse_count = 0;
+    TSTree_traverse(tree, TSTree_traverse_test_cb, valueA);
+    LOG_DEBUG("traverse count is: %d", traverse_count);
+    MU_ASSERT(traverse_count == 6, "Didn't find 6 keys.");
+
+    TSTree_destroy(tree);
 
     return NULL;
 }
 
-RUN_TESTS(all_tests);
+
+    char *all_tests() {
+        MU_SUITE_START();
+
+        MU_RUN_TEST(test_simple);
+        MU_RUN_TEST(test_random_manual);
+
+        return NULL;
+    }
+
+    RUN_TESTS(all_tests);
