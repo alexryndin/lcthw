@@ -40,8 +40,8 @@ int client_connect(char *host, char *port) {
 
     rc = connect(sock, addr->ai_addr, addr->ai_addrlen);
     CHECK(rc == 0, "Cannot create a socket.");
-    rc = nonblock(sock);
-    CHECK(rc == 0, "Cannot set nonblocking.");
+   // rc = nonblock(sock);
+   // CHECK(rc == 0, "Cannot set nonblocking.");
     freeaddrinfo(addr);
     return sock;
 error:
@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
         fd_read_mod = fd_read;
         timeout.tv_sec = 50;
         ret = select(socket + 1, &fd_read_mod, NULL, NULL, &timeout);
+        LOG_DEBUG("select returned %zd", ret);
         CHECK(ret >= 0, "select() failed.");
         if (ret == 0) {
             LOG_INFO("timeout.");
