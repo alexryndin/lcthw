@@ -17,9 +17,9 @@ typedef void (*TSTree_traverse_cb)(void *value, void *data);
 
 TSTreeNode *TSTree_insert(TSTree *node, const char *key, size_t len, void *value);
 
-void TSTree_traverse(TSTree *node, TSTree_traverse_cb cb, void *data);
+void TSTree_traverse(TSTree *t, TSTree_traverse_cb cb, void *data);
 
-void TSTree_destroy(TSTree *root);
+void TSTree_destroy(TSTree *t);
 
 TSTree *TSTree_create();
 

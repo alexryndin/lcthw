@@ -87,6 +87,8 @@ char *test_random_manual() {
     char *value5 = "val5";
     struct tagbstring key6 = bsStatic("ab;sdjh;dgshdg;hsa;hg;asdgh;");
     char *value6 = "val6";
+    struct tagbstring key7 = bsStatic("s");
+    char *value7 = "val7";
 
     TSTree *tree = NULL;
     tree = TSTree_create();
@@ -105,6 +107,8 @@ char *test_random_manual() {
     MU_ASSERT(node != NULL, "");
     node = TSTree_insert(tree, bdata(&key6), blength(&key6), value6);
     MU_ASSERT(node != NULL, "");
+    node = TSTree_insert(tree, bdata(&key7), blength(&key7), value7);
+    MU_ASSERT(node != NULL, "");
 
     void *res = TSTree_search(tree, bdata(&key1), blength(&key1));
     MU_ASSERT(res == value1, "");
@@ -118,34 +122,76 @@ char *test_random_manual() {
     MU_ASSERT(res == value5, "");
     res = TSTree_search(tree, bdata(&key6), blength(&key6));
     MU_ASSERT(res == value6, "");
+    res = TSTree_search(tree, bdata(&key7), blength(&key7));
+    MU_ASSERT(res == value7, "");
 
     res = TSTree_search_prefix(tree, "a", strlen("a"));
     MU_ASSERT(res == value1, "Should find for partial prefix.");
 
+    res = TSTree_search_prefix(tree, "a*", strlen("a*"));
+    MU_ASSERT(res == value1, "Should find for partial prefix.");
+
+    res = TSTree_search_prefix(tree, "asdfsdfsdf*", strlen("asdfsdfsdf*"));
+    MU_ASSERT(res == value1, "Should find for partial prefix.");
+
+    res = TSTree_search_prefix(tree, "sz", strlen("sz"));
+    MU_ASSERT(res == value7, "Should find for partial prefix.");
+
+    res = TSTree_search_prefix(tree, "sd", strlen("sd"));
+    MU_ASSERT(res == value5, "Should find for partial prefix.");
+
     res = TSTree_search_prefix(tree, "abc", strlen("abc"));
-    MU_ASSERT(res == value6, "Should find for partial prefix.");
+    LOG_DEBUG("%s", (char *)res);
+    MU_ASSERT(res == value1, "Should find for partial prefix.");
 
     res = TSTree_search_prefix(tree, "ab;", strlen("abc"));
     MU_ASSERT(res == value6, "Should find for partial prefix.");
 
+    res = TSTree_search_prefix(tree, "bch", strlen("bch"));
+    MU_ASSERT(res == value3, "Should find for partial prefix.");
+
     traverse_count = 0;
     TSTree_traverse(tree, TSTree_traverse_test_cb, valueA);
     LOG_DEBUG("traverse count is: %d", traverse_count);
-    MU_ASSERT(traverse_count == 6, "Didn't find 6 keys.");
+    MU_ASSERT(traverse_count == 7, "Didn't find 7 keys.");
 
     TSTree_destroy(tree);
 
     return NULL;
 }
 
+char *test_partial() {
+    traverse_count = 0;
 
-    char *all_tests() {
-        MU_SUITE_START();
+    struct tagbstring key1 = bsStatic("a");
+    char *value1 = "val1";
 
-        MU_RUN_TEST(test_simple);
-        MU_RUN_TEST(test_random_manual);
+    TSTree *tree = NULL;
+    tree = TSTree_create();
+    MU_ASSERT(tree != NULL, "");
+    TSTreeNode *node = NULL;
 
-        return NULL;
-    }
+    node = TSTree_insert(tree, bdata(&key1), blength(&key1), value1);
+    MU_ASSERT(node != NULL, "");
 
-    RUN_TESTS(all_tests);
+    char *res = NULL;
+
+    res = TSTree_search_prefix(tree, "/", strlen("/"));
+    MU_ASSERT(res == NULL, "Should not find for partial prefix.");
+
+    TSTree_destroy(tree);
+
+    return NULL;
+}
+
+char *all_tests() {
+    MU_SUITE_START();
+
+    MU_RUN_TEST(test_simple);
+    MU_RUN_TEST(test_random_manual);
+    MU_RUN_TEST(test_partial);
+
+    return NULL;
+}
+
+RUN_TESTS(all_tests);

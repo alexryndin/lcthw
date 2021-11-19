@@ -3,6 +3,11 @@
 #include <stdbool.h>
 #include <tstree.h>
 
+typedef struct RET_TWO {
+    TSTreeNode *exact;
+    TSTreeNode *partial;
+} RET_TWO;
+
 typedef struct TSTreeNode {
     char splitchar;
     struct TSTreeNode *low;
@@ -20,35 +25,45 @@ error:
     return NULL;
 }
 
-static TSTreeNode *get_node(TSTree *t, const char *key, size_t len,
-                            char create, char partial);
+static RET_TWO get_node(TSTree *t, const char *key, size_t len, char create,
+                            char partial);
 
-void *TSTree_search(TSTree *root, const char *key, size_t len) {
-    TSTreeNode *ret = NULL;
-    ret = get_node(root, key, len, false, false);
+void *TSTree_search(TSTree *t, const char *key, size_t len) {
+    RET_TWO n = {0};
+    CHECK(t != NULL, "null TSTree.");
+    CHECK(key != NULL, "null key.");
+    CHECK(len > 0, "zero len.");
+    n = get_node(t, key, len, false, false);
 
-    if (ret != NULL) {
-        return ret->value;
+    if (n.exact != NULL) {
+        return n.exact->value;
     }
+error:
     return NULL;
 }
 
-void *TSTree_search_prefix(TSTree *root, const char *key, size_t len) {
-    TSTreeNode *ret = NULL;
-    ret = get_node(root, key, len, false, true);
+void *TSTree_search_prefix(TSTree *t, const char *key, size_t len) {
+    RET_TWO n = {0};
+    CHECK(t != NULL, "null TSTree.");
+    CHECK(key != NULL, "null key.");
+    CHECK(len > 0, "zero len.");
+    n = get_node(t, key, len, false, true);
 
-    if (ret != NULL) {
-        while (ret->value == NULL && ret->equal != NULL) {
-            ret = ret->equal;
-        }
-        return ret->value;
+    while (n.exact != NULL && (n.exact->value == NULL)) {
+        n.exact = n.exact->equal;
     }
+    if (n.exact == NULL || n.exact->value == NULL) {
+        return n.partial != NULL ? n.partial->value : NULL;
+    }
+    return n.exact->value;
+
+error:
     return NULL;
 }
 
-static TSTreeNode *get_node(TSTree *t, const char *key, size_t len,
-                            char create, char partial) {
-    TSTreeNode *cur = NULL;
+static RET_TWO get_node(TSTree *t, const char *key, size_t len, char create,
+                            char partial) {
+    RET_TWO ret = {0};
     CHECK(t != NULL, "null TSTree.");
     CHECK(key != NULL, "null key.");
     CHECK(len > 0, "zero len.");
@@ -58,186 +73,83 @@ static TSTreeNode *get_node(TSTree *t, const char *key, size_t len,
             t->root = calloc(1, sizeof(TSTreeNode));
             t->root->splitchar = key[0];
         } else {
-            return NULL;
+            return ret;
         }
     }
 
-    cur = t->root;
+    ret.exact = t->root;
 
     while (len > 0) {
-        if (key[0] == cur->splitchar) {
+        if (key[0] == ret.exact->splitchar) {
+            if (ret.exact->value != NULL) {
+                ret.partial = ret.exact;
+            }
             if (len == 1) {
                 break;
             }
-            if (cur->equal == NULL) {
+            if (ret.exact->equal == NULL) {
                 if (create) {
-                    cur->equal = calloc(1, sizeof(TSTreeNode));
-                    CHECK_MEM(cur->equal);
-                    cur->equal->splitchar = key[1];
+                    ret.exact->equal = calloc(1, sizeof(TSTreeNode));
+                    CHECK_MEM(ret.exact->equal);
+                    ret.exact->equal->splitchar = key[1];
                 } else {
-                    if (partial) {
-                        break;
-                    }
-                    cur = NULL;
+                    ret.exact = NULL;
                     break;
                 }
             }
-            cur = cur->equal;
+            ret.exact = ret.exact->equal;
             len--;
             key++;
             continue;
-        } else if (key[0] < cur->splitchar) {
-            if (cur->low == NULL) {
+        } else if (key[0] < ret.exact->splitchar) {
+            if (ret.exact->low == NULL) {
                 if (create) {
-                    cur->low = calloc(1, sizeof(TSTreeNode));
-                    CHECK_MEM(cur->equal);
-                    cur->low->splitchar = key[0];
+                    ret.exact->low = calloc(1, sizeof(TSTreeNode));
+                    CHECK_MEM(ret.exact->equal);
+                    ret.exact->low->splitchar = key[0];
                 } else {
-                    if (partial) {
-                        break;
-                    }
-                    cur = NULL;
+                    ret.exact = NULL;
                     break;
                 }
             }
-            cur = cur->low;
+            ret.exact = ret.exact->low;
             continue;
         } else {
             // key[0] > cur->splitchar
-            if (cur->high == NULL) {
+            if (ret.exact->high == NULL) {
                 if (create) {
-                    cur->high = calloc(1, sizeof(TSTreeNode));
-                    CHECK_MEM(cur->equal);
-                    cur->high->splitchar = key[0];
+                    ret.exact->high = calloc(1, sizeof(TSTreeNode));
+                    CHECK_MEM(ret.exact->equal);
+                    ret.exact->high->splitchar = key[0];
                 } else {
-                    if (partial) {
-                        break;
-                    }
-                    cur = NULL;
+                    ret.exact = NULL;
                     break;
                 }
             }
-            cur = cur->high;
+            ret.exact = ret.exact->high;
             continue;
         }
     }
     // fallthrough
 
 error:
-    return cur;
+    return ret;
 }
 
-// static TSTreeNode *get_node(TSTree *t, const char *key, size_t len,
-//                            char create) {
-//    TSTreeNode *cur = NULL;
-//    CHECK(t != NULL, "null TSTree.");
-//    CHECK(key != NULL, "null key.");
-//    CHECK(len > 0, "zero len.");
-//
-//    if (t->root == NULL) {
-//        if (create) {
-//            t->root = calloc(1, sizeof(TSTreeNode));
-//            t->root->splitchar = key[0];
-//        } else {
-//            return NULL;
-//        }
-//    }
-//
-//    cur = t->root;
-//
-//    while (len > 1) {
-//        if (key[0] == cur->splitchar) {
-//            if (cur->equal == NULL) {
-//                if (create) {
-//                    cur->equal = calloc(1, sizeof(TSTreeNode));
-//                    cur->equal->splitchar = key[1];
-//                } else {
-//                    return NULL;
-//                }
-//
-//                cur = cur->equal;
-//                len--;
-//                key++;
-//                continue;
-//            }
-//        } else if (key[0] < cur->splitchar) {
-//            if (cur->low == NULL) {
-//                if (create) {
-//                    cur->low = calloc(1, sizeof(TSTreeNode));
-//                    cur->low->splitchar = key[1];
-//                } else {
-//                    return NULL;
-//                }
-//
-//                cur = cur->low;
-//                continue;
-//            }
-//        } else {
-//            // key[0] > cur->splitchar
-//            if (cur->high == NULL) {
-//                if (create) {
-//                    cur->high = calloc(1, sizeof(TSTreeNode));
-//                    cur->high->splitchar = key[1];
-//                } else {
-//                    return NULL;
-//                }
-//
-//                cur = cur->high;
-//                continue;
-//            }
-//        }
-//    }
-//
-//    // last symbol special case
-//    // loop until we find (or not find) node
-//    while (1) {
-//        if (key[0] == cur->splitchar) {
-//            return cur;
-//        } else if (key[0] < cur->splitchar) {
-//            if (cur->low == NULL) {
-//                if (create) {
-//                    cur->low = calloc(1, sizeof(TSTreeNode));
-//                    cur->low->splitchar = key[0];
-//                    return cur->low;
-//                } else {
-//                    return NULL;
-//                }
-//                cur = cur->low;
-//                continue;
-//            } else {
-//                // key[0] > cur->splitchar
-//                if (cur->high == NULL) {
-//                    if (create) {
-//                        cur->high = calloc(1, sizeof(TSTreeNode));
-//                        cur->high->splitchar = key[0];
-//                        return cur->high;
-//                    } else {
-//                        return NULL;
-//                    }
-//                    cur = cur->high;
-//                    continue;
-//                }
-//            }
-//        }
-//    }
-// error:
-//    return NULL;
-//}
-
 TSTreeNode *TSTree_insert(TSTree *t, const char *key, size_t len, void *value) {
-    TSTreeNode *cur = NULL;
+    RET_TWO n = {0};
     CHECK(t != NULL, "null TSTree.");
     CHECK(key != NULL, "null key.");
     CHECK(len > 0, "zero len.");
 
-    cur = get_node(t, key, len, true, false);
+    n = get_node(t, key, len, true, false);
 
-    CHECK(cur != NULL, "error getting node.");
-    CHECK(cur->value == NULL, "already exists.");
+    CHECK(n.exact != NULL, "error getting node.");
+    CHECK(n.exact->value == NULL, "already exists.");
 
-    cur->value = value;
+    n.exact->value = value;
 
-    return cur;
+    return n.exact;
 
 error:
     return NULL;
