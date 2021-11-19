@@ -8,8 +8,9 @@
 volatile sig_atomic_t stop = 0;
 
 void inthand(int signum) {
-    if (signum == SIGINT)
+    if (signum == SIGINT) {
         stop = 1;
+    }
 }
 
 static const char *USAGE = "Usage: %s filepath\n";
@@ -17,6 +18,9 @@ static const char *USAGE = "Usage: %s filepath\n";
 static bstring read_line(const char *prompt) {
     printf("%s", prompt);
     bstring ret = bgets((bNgetc)fgetc, stdin, '\n');
+    if (ret == NULL || blength(ret) == 0) {
+        return ret;
+    }
     CHECK(btrimws(ret) == BSTR_OK, "Failed to trim input");
 
 error:
@@ -77,12 +81,16 @@ static TSTree *TSTree_load_routes(const char *filepath) {
     while ((_read = bgets((bNgetc)fgetc, f, '\n')) != NULL) {
         if (btrimws(_read) != BSTR_OK) {
             LOG_ERR("Failed to trim read string, skipping...");
-            bdestroy(_read);
-            _read = NULL;
+            if (_read != NULL) {
+                bdestroy(_read);
+                _read = NULL;
+            }
             continue;
         }
 
         add_route_data(ret, _read);
+        bdestroy(_read);
+        _read = NULL;
     }
     goto exit;
 
@@ -114,6 +122,7 @@ static void destroy_routes(TSTree *routes) {
 }
 
 int main(int argc, char *argv[]) {
+    signal(SIGINT, &inthand);
     if (argc != 2) {
         printf(USAGE, argv[0]);
         return 1;
@@ -134,7 +143,9 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        match_url(routes, _read);
+        if (blength(_read) > 0) {
+            match_url(routes, _read);
+        }
         bdestroy(_read);
         _read = NULL;
     }
